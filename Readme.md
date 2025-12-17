@@ -24,54 +24,53 @@ This project demonstrates **clean backend architecture for ML inference**, follo
 
 * **Dataset**: Iris dataset (scikit-learn)
 * **Features**:
-
   * Sepal length (cm)
   * Sepal width (cm)
   * Petal length (cm)
   * Petal width (cm)
 * **Pipeline**:
-
   * `StandardScaler`
   * `LogisticRegression`
 * **Classes**:
 
-  | ID | Class      |
-  | -- | ---------- |
-  | 0  | setosa     |
-  | 1  | versicolor |
-  | 2  | virginica  |
+| ID | Class |
+|----|------|
+| 0  | setosa |
+| 1  | versicolor |
+| 2  | virginica |
 
 The model is trained on raw centimeter values and saved as a **single pipeline**, ensuring consistent preprocessing during inference.
 
 ---
 
 ## 📁 Project Structure
-
 ```
+
 Iris_Flower_Prediction/
 │
 ├── app/
-│   ├── main.py              # App factory & router wiring
-│   ├── config.py            # Environment-based configuration
-│   ├── schemas.py           # Pydantic request & response models
-│   ├── model_loader.py      # ML model loading logic
+│   ├── main.py
+│   ├── config.py
+│   ├── schemas.py
+│   ├── model_loader.py
 │   │
 │   ├── routers/
-│   │   ├── predict.py       # /predict endpoint
-│   │   └── health.py        # /health endpoint
+│   │   ├── predict.py
+│   │   └── health.py
 │   │
 │   ├── services/
-│   │   ├── predict.py       # ML prediction logic
-│   │   └── wiki.py          # Wikipedia image fetching
+│   │   ├── predict.py
+│   │   └── wiki.py
 │   │
-│   └── __init__.py
+│   └── **init**.py
 │
 ├── model/
-│   └── saved_model_iris.pkl # Trained ML pipeline
+│   └── saved_model_iris.pkl
 │
 ├── requirements.txt
 └── README.md
-```
+
+````
 
 ---
 
@@ -79,10 +78,7 @@ Iris_Flower_Prediction/
 
 ### 🔮 `POST /predict`
 
-Predict the Iris flower species.
-
 #### Request Body
-
 ```json
 {
   "sepal_length": 5.1,
@@ -90,7 +86,7 @@ Predict the Iris flower species.
   "petal_length": 1.4,
   "petal_width": 0.2
 }
-```
+````
 
 #### Input Validation (cm)
 
@@ -100,8 +96,6 @@ Predict the Iris flower species.
 | Sepal width  | 2.0 | 4.4 |
 | Petal length | 1.0 | 6.9 |
 | Petal width  | 0.1 | 2.5 |
-
-Invalid inputs automatically return **422 Unprocessable Entity** with detailed error messages.
 
 ---
 
@@ -124,8 +118,6 @@ Invalid inputs automatically return **422 Unprocessable Entity** with detailed e
 
 ### ❤️ `GET /health`
 
-Health check endpoint for Docker/Kubernetes.
-
 ```json
 {
   "status": "ok",
@@ -139,12 +131,6 @@ Health check endpoint for Docker/Kubernetes.
 
 The API uses **Pydantic response models** to validate output structure.
 
-* Ensures correct types & keys
-* Automatically documented in `/docs`
-* Prevents accidental malformed responses
-
-Validation is applied via:
-
 ```python
 @router.post("/predict", response_model=PredictResponse)
 ```
@@ -153,38 +139,23 @@ Validation is applied via:
 
 ## ⚙️ Configuration (Environment Variables)
 
-| Variable           | Description                     | Default                        |
-| ------------------ | ------------------------------- | ------------------------------ |
-| `MODEL_PATH`       | Path to ML model                | `./model/saved_model_iris.pkl` |
-| `ENABLE_WIKI`      | Enable Wikipedia image fetching | `true`                         |
-| `WIKI_TIMEOUT_SEC` | Wikipedia API timeout (sec)     | `6`                            |
-| `WIKI_USER_AGENT`  | HTTP user agent                 | `iris-fastapi/1.0`             |
-| `LOG_LEVEL`        | Logging level                   | `INFO`                         |
+| Variable         | Description                     | Default                        |
+| ---------------- | ------------------------------- | ------------------------------ |
+| MODEL_PATH       | Path to ML model                | `./model/saved_model_iris.pkl` |
+| ENABLE_WIKI      | Enable Wikipedia image fetching | `true`                         |
+| WIKI_TIMEOUT_SEC | Wikipedia API timeout           | `6`                            |
+| WIKI_USER_AGENT  | HTTP user agent                 | `iris-fastapi/1.0`             |
+| LOG_LEVEL        | Logging level                   | `INFO`                         |
 
 ---
 
 ## ▶️ Running Locally
 
-### 1️⃣ Create virtual environment
-
-```bash
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-```
-
-### 2️⃣ Install dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-### 3️⃣ Run the API
-
 ```bash
 uvicorn app.main:app --reload
 ```
 
-### 4️⃣ Open Swagger UI
+Swagger:
 
 ```
 http://127.0.0.1:8000/docs
@@ -192,37 +163,55 @@ http://127.0.0.1:8000/docs
 
 ---
 
-## 🐳 Docker Ready
+## 🐳 Docker
 
-The app is designed for containerization:
+```bash
+docker build -t iris-api .
+docker run -p 8000:8000 iris-api
+```
 
-* Model loaded at startup
-* Stateless requests
-* Configurable via environment variables
-* Health endpoint for orchestration
+---
 
-*(Dockerfile can be added later without refactoring code)*
+## ☁️ AWS EC2 Deployment (Docker)
+
+After deploying the container on an EC2 instance, the API is accessible via the **EC2 Public IPv4 address**:
+
+```
+http://<EC2_PUBLIC_IP>:8000/docs
+```
+
+> The public IP can be found in:
+> AWS Console → EC2 → Instances → Public IPv4 address
+
+⚠️ Do **not** hard-code the public IP in source code or configuration files.
+
+---
+
+## 🎨 Streamlit Frontend (Local / Network Access)
+
+During local development, the Streamlit frontend exposes:
+
+```
+Local URL:    http://localhost:8501
+Network URL:  http://10.130.49.2:8501
+```
+
+### Notes
+
+* `localhost` → accessible only on the same machine
+* `Network URL` → accessible **within the same local network**
+* These URLs are **not public** and **should not be used for cloud deployment**
+* For production, the frontend should call the **EC2 public API URL**
 
 ---
 
 ## 🛡️ Production Considerations
 
-* Model loaded once at startup (fast inference)
-* External API calls use retries & caching
-* Input validation at API boundary
-* Response validation enforced
-* Graceful degradation if Wikipedia fails
-
----
-
-## 🔮 Possible Enhancements
-
-* Dockerfile & CI pipeline
-* Rate limiting & auth
-* Structured logging & metrics
-* Model versioning
-* Multiple ML models
-* Image source fallback
+* Model loaded once at startup
+* Stateless API
+* Input & output validation enforced
+* External API calls fail gracefully
+* Docker & cloud ready
 
 ---
 
@@ -230,7 +219,6 @@ The app is designed for containerization:
 
 **Bishal Pandey**
 <br>
-MSc Artificial Intelligence
+MSc Artificial Intelligence @
 University of Southampton
 
----

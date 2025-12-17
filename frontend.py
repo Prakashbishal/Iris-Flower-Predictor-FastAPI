@@ -1,7 +1,7 @@
 import streamlit as st
 import requests
 
-API_URL="http://localhost:8000/predict"
+API_URL="http://51.20.141.37:8000/predict"
 
 st.title("Iris Flower Predictor")
 st.markdown("Enter the flower measurements (in cm) and click **Predict**.")
